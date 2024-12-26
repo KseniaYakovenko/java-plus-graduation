@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.HitDto;
 import ru.practicum.HitStatDto;
-import ru.practicum.StatClient;
 import ru.practicum.controller.params.EventGetByIdParams;
 import ru.practicum.controller.params.EventUpdateParams;
 import ru.practicum.controller.params.search.EventSearchParams;
