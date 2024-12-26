@@ -37,12 +37,10 @@ public class LocationServiceImpl implements LocationService {
                 .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found"));
         Location location = locationRepository.findById(locationId)
                 .orElseThrow(() -> new NotFoundException("Location with id " + locationId + " not found"));
-        if (locationRepository.checkLikeExisting(userId, locationId)) {
-            locationRepository.deleteLike(userId, locationId);
-        } else {
+        if (!locationRepository.checkLikeExisting(userId, locationId)) {
             throw new NotFoundException("Like for Location: " + locationId + " by user: " + user.getId() + " not exist");
         }
-
+        locationRepository.deleteLike(userId, locationId);
     }
 
     @Override

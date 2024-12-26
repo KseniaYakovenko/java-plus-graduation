@@ -1,7 +1,9 @@
 package ru.practicum.controller.admin;
 
+import java.util.List;
+
 public record AdminUsersGetAllParams(
-        Long[] ids,
+        List<Long> ids,
         int from,
         int size
 ) {

@@ -38,7 +38,7 @@ public class AdminUserController {
 
     @GetMapping
     public List<UserDto> getAll(
-            @RequestParam(required = false) Long[] ids,
+            @RequestParam(required = false) List<Long> ids,
             @RequestParam(defaultValue = "0") int from,
             @RequestParam(defaultValue = "10") int size
     ) {

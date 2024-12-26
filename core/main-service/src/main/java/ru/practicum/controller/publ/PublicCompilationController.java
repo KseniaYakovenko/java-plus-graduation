@@ -18,7 +18,7 @@ public class PublicCompilationController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<CompilationDto> getAll(@RequestParam(value = "pinned", required = false, defaultValue = "false") Boolean pinned,
+    public List<CompilationDto> getAll(@RequestParam(value = "pinned", defaultValue = "false") Boolean pinned,
                                        @RequestParam(value = "from", defaultValue = "0") int from,
                                        @RequestParam(value = "size", defaultValue = "10") int size) {
         return compilationService.getAll(pinned, from, size);

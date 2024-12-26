@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 import static ru.practicum.mapper.HitDtoMapper.dtoToHit;
 import static ru.practicum.mapper.HitDtoMapper.toHitDto;
-import static ru.practicum.utils.Constants.formatter;
+import static ru.practicum.utils.Constants.FORMATTER;
 
 @RequiredArgsConstructor
 @Service
@@ -31,6 +31,7 @@ public class StatsServiceImpl implements StatsService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<HitStatDto> getHits(String start, String end, List<String> uris, Boolean unique) {
 
         List<Hit> data;
@@ -38,8 +39,8 @@ public class StatsServiceImpl implements StatsService {
         if ((start.isBlank() || end.isBlank())) {
             data = statsRepository.findAllByUriIn(uris);
         } else {
-            LocalDateTime localDateTimeStart = LocalDateTime.parse(start, formatter);
-            LocalDateTime localDateTimeEnd = LocalDateTime.parse(end, formatter);
+            LocalDateTime localDateTimeStart = LocalDateTime.parse(start, FORMATTER);
+            LocalDateTime localDateTimeEnd = LocalDateTime.parse(end, FORMATTER);
             if (!localDateTimeStart.isBefore(localDateTimeEnd)) {
                 throw new IllegalArgumentException("start must be before end");
             }

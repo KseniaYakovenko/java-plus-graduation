@@ -13,7 +13,6 @@ import ru.practicum.exception.NotFoundException;
 import ru.practicum.mapper.UserMapper;
 import ru.practicum.repository.UserRepository;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -31,22 +30,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<UserDto> getAll(AdminUsersGetAllParams adminUsersGetAllParams) {
-        List<User> userSearchList;
-        if (adminUsersGetAllParams.ids() != null) {
-            userSearchList = userRepository.findAllByIdIn(
-                    Arrays.asList(adminUsersGetAllParams.ids()), PageRequest.of(adminUsersGetAllParams.from(), adminUsersGetAllParams.size()));
-        } else {
-            userSearchList =
-                    userRepository.findAll(
-                            PageRequest.of(
-                                    adminUsersGetAllParams.from(), adminUsersGetAllParams.size())).stream().toList();
-        }
+        PageRequest pageRequest = PageRequest.of(
+                adminUsersGetAllParams.from(), adminUsersGetAllParams.size());
+
+        List<User> userSearchList = adminUsersGetAllParams.ids() == null
+                ? userRepository.findAll(pageRequest).stream().toList()
+                : userRepository.findAllByIdIn(adminUsersGetAllParams.ids(), pageRequest);
 
         return userSearchList.stream()
-                .map(userMapper::userToUserDto)
-                .toList();
+                .map(userMapper::userToUserDto).toList();
     }
 
     @Override

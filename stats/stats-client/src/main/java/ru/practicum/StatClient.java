@@ -15,8 +15,8 @@ public interface StatClient {
     void saveHit(@RequestBody HitDto hitDto);
 
     @GetMapping("stats")
-    List<HitStatDto> getStats(@RequestParam(value = "start", required = false, defaultValue = "") String start,
-                              @RequestParam(value = "end", required = false, defaultValue = "") String end,
-                              @RequestParam(value = "uris", required = false, defaultValue = "") List<String> uris,
-                              @RequestParam(value = "unique", defaultValue = "false") Boolean unique);
+    List<HitStatDto> getStats(@RequestParam(defaultValue = "") String start,
+                              @RequestParam(defaultValue = "") String end,
+                              @RequestParam(defaultValue = "") List<String> uris,
+                              @RequestParam(defaultValue = "false") Boolean unique);
 }
