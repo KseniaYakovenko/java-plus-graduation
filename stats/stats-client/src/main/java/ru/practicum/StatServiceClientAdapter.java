@@ -3,9 +3,6 @@ package ru.practicum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import ru.practicum.HitDto;
-import ru.practicum.HitStatDto;
-import ru.practicum.StatClient;
 
 import java.util.Collections;
 import java.util.List;

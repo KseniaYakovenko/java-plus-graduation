@@ -1,6 +1,6 @@
 spring:
   application:
-    name: request-service
+    name: user-service
   config:
     import: "configserver:"
   cloud:
@@ -19,6 +19,10 @@ eureka:
     fetch-registry: true
     serviceUrl:
       defaultZone: http://${eureka.instance.hostname:localhost}:${eureka.instance.port:8761}/eureka/
-
+  instance:
+    preferIpAddress: true
+    hostname: localhost
+    instance-id: "${spring.application.name}:${random.value}"
+    leaseRenewalIntervalInSeconds: 10
 server:
   port: 0

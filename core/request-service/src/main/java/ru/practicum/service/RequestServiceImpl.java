@@ -31,7 +31,6 @@ import java.util.Objects;
 public class RequestServiceImpl implements RequestService {
 
     private final RequestRepository requestRepository;
-
     private final UserServiceClient userServiceClient;
     private final EventServiceClient eventServiceClient;
     private final RequestMapper requestMapper;

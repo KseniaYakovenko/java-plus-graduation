@@ -1,7 +1,7 @@
 package ru.practicum.dto.location;
 
 public record LocationDto(
-        long id,
+        Long id,
         Float lat,
         Float lon,
         Long likes

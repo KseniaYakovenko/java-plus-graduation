@@ -16,7 +16,7 @@ public abstract class EventMapper {
     @Mapping(target = "initiator", ignore = true)
     @Mapping(target = "initiatorId", source = "initiatorId")
     @Mapping(target = "category", source = "category")
-    @Mapping(target = "location", ignore = true)
+    @Mapping(target = "location", source = "location")
     @Mapping(target = "createOn", expression = "java(getCurrentLocalDatetime())")
     @Mapping(target = "state", expression = "java(getPendingEventState())")
     @Mapping(target = "id", ignore = true)

@@ -7,7 +7,7 @@ import ru.practicum.dto.location.LocationDto;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "location-service")
+@FeignClient(name = "todo-service")
 public interface LocationServiceClient {
 
     @GetMapping("/users/{userId}/locations/top")
