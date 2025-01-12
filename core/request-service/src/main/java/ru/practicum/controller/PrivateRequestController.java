@@ -15,12 +15,12 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/users/{userId}/requests")
+@RequestMapping("/users/{userId}")
 public class PrivateRequestController {
 
     private final RequestService requestService;
 
-    @PostMapping
+    @PostMapping("/requests")
     @ResponseStatus(HttpStatus.CREATED)
     public ParticipationRequestDto create(
             @PathVariable long userId,
@@ -33,7 +33,7 @@ public class PrivateRequestController {
         return receivedRequestDto;
     }
 
-    @GetMapping
+    @GetMapping("/requests")
     public List<ParticipationRequestDto> getOwnRequests(
             @PathVariable long userId) {
         log.info("==> GET. /users/{userId}/requests " +
@@ -44,7 +44,7 @@ public class PrivateRequestController {
         return requestDtoList;
     }
 
-    @PatchMapping("/{requestId}/cancel")
+    @PatchMapping("/requests/{requestId}/cancel")
     public ParticipationRequestDto cancel(
             @PathVariable long userId,
             @PathVariable long requestId) {
@@ -56,7 +56,7 @@ public class PrivateRequestController {
         return receivedDto;
     }
 
-    @GetMapping("/{eventId}/requests")
+    @GetMapping("/events/{eventId}/requests")
     public List<ParticipationRequestDto> getAllRequestsForOwnEvent(
             @PathVariable long userId,
             @PathVariable long eventId) {
@@ -72,7 +72,7 @@ public class PrivateRequestController {
         return receivedRequestsDtoList;
     }
 
-    @PatchMapping("/{eventId}/requests")
+    @PatchMapping("/events/{eventId}/requests")
     public EventRequestStatusUpdateResult updateRequestStatus(
             @PathVariable long userId,
             @PathVariable long eventId,
