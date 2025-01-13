@@ -20,10 +20,10 @@ import ru.practicum.exception.NotFoundException;
 import ru.practicum.mapper.RequestMapper;
 import ru.practicum.repository.RequestRepository;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -184,14 +184,9 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public Map<Long, Long> countByStatusAndEventsIds(RequestStatus status, List<Long> eventsIds) {
-
-        List<Map<String,Long>> list = requestRepository.countByStatusAndEventsIds(RequestStatus.CONFIRMED.toString(), eventsIds);
-        Map<Long, Long> eventRequestsWithStatus = new HashMap<>();
-        for (Map<String, Long> row : list) {
-            Long eventId = row.get("EVENT_ID");
-            Long statusCount = row.get("EVENT_COUNT");
-            eventRequestsWithStatus.put(eventId, statusCount);
-        }
-        return eventRequestsWithStatus;
+        return requestRepository.countByStatusAndEventsIds(RequestStatus.CONFIRMED.toString(), eventsIds)
+                .stream()
+                .collect(Collectors.toMap(s -> s.get("EVENT_ID"),
+                        s -> s.get("EVENT_COUNT")));
     }
 }
