@@ -24,6 +24,7 @@ import ru.practicum.entity.Location;
 import ru.practicum.enums.EventState;
 import ru.practicum.enums.RequestStatus;
 import ru.practicum.enums.StateAction;
+import ru.practicum.ewm.stats.proto.RecommendationsMessages;
 import ru.practicum.exception.AccessException;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.IncorrectValueException;
@@ -169,35 +170,26 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional(readOnly = true)
     public List<EventShortDto> getTopEvent(Integer count) {
-
-        String rangeEnd = LocalDateTime.now().format(dateTimeFormatter);
-        String rangeStart = LocalDateTime.now().minusYears(100).format(dateTimeFormatter);
-
-        List<Event> eventTopList = eventRepository.findTop(count);
-
-        for (Event event : eventTopList) {
-
-            Long view = 0L;
-
-            event.setViews(view);
-            event.setConfirmedRequests(
-                    requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, event.getId()));
-            event.setLikes(eventRepository.countLikesByEventId(event.getId()));
-        }
-
+        List<Event> eventTopList = getTopEvents(count);
         return eventTopList.stream()
                 .map(eventMapper::eventToEventShortDto)
                 .toList();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<EventShortDto> getTopViewEvent(Integer count) {
 
-        String rangeEnd = LocalDateTime.now().format(dateTimeFormatter);
-        String rangeStart = LocalDateTime.now().minusYears(100).format(dateTimeFormatter);
-
-    return Collections.emptyList();
+    private List<Event> getTopEvents(Integer count) {
+        List<Event> eventTopList = eventRepository.findTop(count);
+        for (Event event : eventTopList) {
+            event.setConfirmedRequests(
+                    requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, event.getId()));
+            event.setLikes(eventRepository.countLikesByEventId(event.getId()));
+            double rate = analyzerClient.getInteractionsCount(List.of(event.getId()))
+                    .findFirst()
+                    .map(RecommendationsMessages.RecommendedEventProto::getScore)
+                    .orElse(0.0);
+            event.setRating(rate);
+        }
+        return eventTopList;
     }
 
 
@@ -252,6 +244,14 @@ public class EventServiceImpl implements EventService {
 
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<EventShortDto> getTopViewEvent(Integer count) {
+        List<Event> eventTopList = getTopEvents(count);
+        return eventTopList.stream()
+                .map(eventMapper::eventToEventShortDto)
+                .toList();
+    }
 
     @Override
     @Transactional(readOnly = true)
