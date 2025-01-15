@@ -19,7 +19,7 @@ public class UserActionsConsumer {
             containerFactory = "userActionsKafkaListenerFactory"
     )
     public void consumeUserActions(UserActionAvro message) {
-        log.info("Полученное действие пользователя: {}", message);
+        log.info("user action: {}", message);
         userActionService.updateUserAction(message);
     }
 }

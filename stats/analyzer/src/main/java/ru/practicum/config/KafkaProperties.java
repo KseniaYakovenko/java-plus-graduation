@@ -1,12 +1,10 @@
 package ru.practicum.config;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-@Getter
-@Setter
+@Data
 @Component
 @ConfigurationProperties(prefix = "kafka")
 public class KafkaProperties {
@@ -14,8 +12,7 @@ public class KafkaProperties {
     private final ConsumerProps userActionsConsumer = new ConsumerProps();
     private final ConsumerProps eventsSimilarityConsumer = new ConsumerProps();
 
-    @Getter
-    @Setter
+    @Data
     public static class ConsumerProps {
         private String topic;
         private String groupId;

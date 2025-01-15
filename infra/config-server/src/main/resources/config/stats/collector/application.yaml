@@ -13,8 +13,8 @@ grpc:
   server:
     port: 0
   client:
-    analyzer: # <- должно соответствовать значению в @GrpcClient
-      address: 'discovery:///collector' # адрес gRPC-сервиса
+    analyzer:
+      address: 'discovery:///collector'
       enableKeepAlive: true
       keepAliveWithoutCalls: true
       negotiationType: plaintext
