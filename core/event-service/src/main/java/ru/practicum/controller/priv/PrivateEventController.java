@@ -61,7 +61,7 @@ public class PrivateEventController {
     public EventFullDto getById(@PathVariable long userId, @PathVariable long eventId) {
         log.info("==> GET. /users/{userId}/events/{eventId} " +
                 "Getting event with id: {}, by user with id: {}", eventId, userId);
-        EventFullDto receivedEventDto = eventService.getById(new EventGetByIdParams(userId, eventId), null);
+        EventFullDto receivedEventDto = eventService.getById(new EventGetByIdParams(userId, eventId));
         log.info("<== GET. /users/{userId}/events/{eventId} " +
                 "Returning event with id: {}", receivedEventDto.id());
         return receivedEventDto;
