@@ -6528,9 +6528,7 @@
 									"pm.expect(target).to.have.property('likesCount');\r",
 									"});\r",
 									"\r",
-									"});\r",
 									"\r",
-									"});\r",
 									"\r",
 									"\r",
 									""
