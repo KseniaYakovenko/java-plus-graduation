@@ -2,10 +2,25 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: main-service_route
-          uri: lb://main-service
+        - id: user-service_route
+          uri: lb://user-service
           predicates:
-            - Path=/**
-
+            - Path=/users ,/admin/users,/admin/users/{userId}
+        - id: event_service_route
+          uri: lb://event-service
+          predicates:
+            - Path=/events/**,/admin/events/**,/users/{userId}/events,/users/{userId}/events/{eventId},/users/{userId}/events/{eventId}/likes/**
+        - id: event_service_route_compilation
+          uri: lb://event-service
+          predicates:
+            - Path=/compilations/**,/admin/compilations/**
+        - id: event_service_route_categories
+          uri: lb://event-service
+          predicates:
+            - Path=/categories/**,/admin/categories/**
+        - id: request_service_route
+          uri: lb://request-service
+          predicates:
+           - Path=/users/{userId}/requests/**, /users/{userId}/events/{eventId}/requests
 server:
   port: 8080
