@@ -266,12 +266,8 @@ public class EventServiceImpl implements EventService {
         } else {
             receivedEvent = eventRepository.findById(params.eventId())
                     .orElseThrow(() -> new NotFoundException("Event with id " + params.eventId() + " not found"));
-            // analyzerClient.saveHit(hitDto);
 
 
-            Long view = 0L;
-
-            receivedEvent.setViews(view);
             receivedEvent.setConfirmedRequests(
                     requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, receivedEvent.getId()));
             receivedEvent.setLikes(eventRepository.countLikesByEventId(receivedEvent.getId()));

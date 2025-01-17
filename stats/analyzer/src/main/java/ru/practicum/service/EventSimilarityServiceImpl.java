@@ -39,13 +39,11 @@ public class EventSimilarityServiceImpl implements EventSimilarityService {
     }
 
     private EventSimilarity findPair(long eventA, long eventB) {
-        var list = eventSimilarityRepository.findByEventAOrEventB(eventA, eventB);
-        for (EventSimilarity e : list) {
-            if ((e.getEventA().equals(eventA) && e.getEventB().equals(eventB))
-                    || (e.getEventA().equals(eventB) && e.getEventB().equals(eventA))) {
-                return e;
-            }
-        }
-        return null;
+        return eventSimilarityRepository.findByEventAOrEventB(eventA, eventB)
+                .stream()
+                .filter(e -> (e.getEventA().equals(eventA) && e.getEventB().equals(eventB))
+                        || (e.getEventA().equals(eventB) && e.getEventB().equals(eventA)))
+                .findFirst()
+                .orElse(null);
     }
 }

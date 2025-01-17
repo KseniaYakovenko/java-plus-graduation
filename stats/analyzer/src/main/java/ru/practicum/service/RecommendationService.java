@@ -30,23 +30,20 @@ public class RecommendationService {
         long userId  = request.getUserId();
         int maxRes   = request.getMaxResults();
 
-        List<EventSimilarity> simList = similarityRepo.findByEventAOrEventB(eventId, eventId);
-
         Set<Long> interacted = userInteracted(userId);
+        List<RecommendedEvent> result, recList = new ArrayList<>();
 
-        List<RecommendedEvent> result = new ArrayList<>();
-        for (EventSimilarity e : simList) {
-            long other = (e.getEventA() == eventId) ? e.getEventB() : e.getEventA();
-            if (!interacted.contains(other)) {
-                result.add(new RecommendedEvent(other, e.getScore()));
-            }
-        }
+        similarityRepo.findByEventAOrEventB(eventId, eventId)
+                .forEach(e -> {
+                    long other = (e.getEventA() == eventId) ? e.getEventB() : e.getEventA();
+                    if (!interacted.contains(other)) {
+                        recList.add(new RecommendedEvent(other, e.getScore()));
+                    }
+                });
+        result = recList.stream()
+                .sorted(Comparator.comparingDouble(RecommendedEvent::score).reversed()).toList();
 
-        result.sort(Comparator.comparingDouble(RecommendedEvent::score).reversed());
-        if (result.size() > maxRes) {
-            return result.subList(0, maxRes);
-        }
-        return result;
+        return result.size() <= maxRes ? result : result.subList(0, maxRes);
     }
 
     public List<RecommendedEvent> getRecommendationsForUser(RecommendationsMessages.UserPredictionsRequestProto request) {

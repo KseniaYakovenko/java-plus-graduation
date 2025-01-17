@@ -43,7 +43,7 @@ public class PublicEventController {
 
     @GetMapping("/recommendations")
     public List<EventRecommendationDto> getRecommendations(@RequestHeader(X_EWM_USER_ID_HEADER) long userId,
-                                                           @RequestParam(name = "maxResults", defaultValue = "10") int maxResults) {
+                                                           @RequestParam(defaultValue = "10") int maxResults) {
 
         var recStream = analyzerClient.getRecommendationsForUser(userId, maxResults);
         var recList = recStream.toList();

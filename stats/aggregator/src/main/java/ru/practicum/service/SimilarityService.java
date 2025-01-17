@@ -54,11 +54,10 @@ public class SimilarityService {
         int updatedSum = oldSum + diff;
         eventWeightsSum.put(eventId, updatedSum);
 
-        for (Long otherEvent : weights.keySet()) {
-            if (!otherEvent.equals(eventId)) {
-                updatePairSimilarity(eventId, otherEvent, timestamp);
-            }
-        }
+        weights.keySet()
+                .stream()
+                .filter(otherEvent -> otherEvent.equals(eventId))
+                .forEach(otherEvent -> updatePairSimilarity(eventId, otherEvent, timestamp));
     }
 
     private void updatePairSimilarity(long eventA, long eventB, Instant timestamp) {
@@ -95,16 +94,10 @@ public class SimilarityService {
         Map<Long, Integer> userMapA = weights.getOrDefault(eventA, Map.of());
         Map<Long, Integer> userMapB = weights.getOrDefault(eventB, Map.of());
 
-        double sum = 0.0;
-        for (Map.Entry<Long, Integer> e : userMapA.entrySet()) {
-            Long userId = e.getKey();
-            int wA = e.getValue();
-            Integer wB = userMapB.get(userId);
-            if (wB != null) {
-                sum += Math.min(wA, wB);
-            }
-        }
-        return sum;
+        return userMapA.entrySet().stream()
+                .filter(e -> userMapB.get(e.getKey()) != null)
+                .mapToDouble(e -> Math.min(e.getValue(), userMapB.get(e.getKey())))
+                .sum();
     }
 
     private int convertActionType(ActionTypeAvro actionType) {
