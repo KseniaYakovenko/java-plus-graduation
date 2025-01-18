@@ -7,9 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.HitDto;
-import ru.practicum.HitStatDto;
-import ru.practicum.StatClient;
+import ru.practicum.AnalyzerClient;
 import ru.practicum.client.RequestServiceClient;
 import ru.practicum.client.UserServiceClient;
 import ru.practicum.controller.params.EventGetByIdParams;
@@ -26,6 +24,7 @@ import ru.practicum.entity.Location;
 import ru.practicum.enums.EventState;
 import ru.practicum.enums.RequestStatus;
 import ru.practicum.enums.StateAction;
+import ru.practicum.ewm.stats.proto.RecommendationsMessages;
 import ru.practicum.exception.AccessException;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.IncorrectValueException;
@@ -39,7 +38,6 @@ import ru.practicum.mapper.LocationMapper;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static ru.practicum.entity.QEvent.event;
 import static ru.practicum.utils.Constants.TIMESTAMP_PATTERN;
@@ -57,7 +55,7 @@ public class EventServiceImpl implements EventService {
     private final RequestServiceClient requestServiceClient;
     private final LocationMapper locationMapper;
 
-    private final StatClient statClient;
+    private final AnalyzerClient analyzerClient;
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(TIMESTAMP_PATTERN);
 
@@ -96,7 +94,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<EventShortDto> getAllByPublic(EventSearchParams searchParams, HitDto hitDto) {
+    public List<EventShortDto> getAllByPublic(EventSearchParams searchParams) {
 
         Pageable page = PageRequest.of(searchParams.getFrom(), searchParams.getSize());
 
@@ -151,19 +149,13 @@ public class EventServiceImpl implements EventService {
         List<Event> eventListBySearch = eventListBySearch =
                 eventRepository.findAll(booleanExpression, page).stream().toList();
 
-        statClient.saveHit(hitDto);
+        // analyzerClient.saveHit(hitDto);
 
 
         for (Event event : eventListBySearch) {
-            List<HitStatDto> hitStatDtoList = statClient.getStats(
-                    rangeStart.format(dateTimeFormatter),
-                    rangeEnd.format(dateTimeFormatter),
-                    List.of("/event/" + event.getId()),
-                    false);
+
             Long view = 0L;
-            for (HitStatDto hitStatDto : hitStatDtoList) {
-                view += hitStatDto.getHits();
-            }
+
             event.setViews(view);
             event.setConfirmedRequests(
                     requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, event.getId()));
@@ -177,84 +169,30 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<EventShortDto> getTopEvent(Integer count, HitDto hitDto) {
-
-        String rangeEnd = LocalDateTime.now().format(dateTimeFormatter);
-        String rangeStart = LocalDateTime.now().minusYears(100).format(dateTimeFormatter);
-
-        List<Event> eventTopList = eventRepository.findTop(count);
-
-        statClient.saveHit(hitDto);
-
-        for (Event event : eventTopList) {
-            List<HitStatDto> hitStatDtoList = statClient.getStats(
-                    rangeStart,
-                    rangeEnd,
-                    List.of("/event/" + event.getId()),
-                    true);
-            Long view = 0L;
-            for (HitStatDto hitStatDto : hitStatDtoList) {
-                view += hitStatDto.getHits();
-            }
-            event.setViews(view);
-            event.setConfirmedRequests(
-                    requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, event.getId()));
-            event.setLikes(eventRepository.countLikesByEventId(event.getId()));
-        }
-
+    public List<EventShortDto> getTopEvent(Integer count) {
+        List<Event> eventTopList = getTopEvents(count);
         return eventTopList.stream()
                 .map(eventMapper::eventToEventShortDto)
                 .toList();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<EventShortDto> getTopViewEvent(Integer count, HitDto hitDto) {
 
-        String rangeEnd = LocalDateTime.now().format(dateTimeFormatter);
-        String rangeStart = LocalDateTime.now().minusYears(100).format(dateTimeFormatter);
-
-        statClient.saveHit(hitDto);
-
-        List<HitStatDto> hitStatDtoList = statClient.getStats(
-                rangeStart,
-                rangeEnd,
-                null,
-                true);
-
-        Map<Long, Long> idsMap = hitStatDtoList.stream().filter(it -> it.getUri().matches("\\/events\\/\\d+$"))
-                .collect((Collectors.groupingBy(dto ->
-                                Long.parseLong(dto.getUri().replace("/events/", "")),
-                        Collectors.summingLong(HitStatDto::getHits))));
-
-        Set<Long> ids = idsMap.keySet();
-        List<Event> eventListBySearch = eventRepository.findAllById(ids);
-        List<Event> result = new ArrayList<>();
-        idsMap.entrySet().stream()
-                .sorted(Map.Entry.<Long, Long>comparingByValue().reversed())
-                .limit(count)
-                .forEach(it -> {
-                            Optional<Event> e = eventListBySearch.stream().filter(event ->
-                                    event.getId() == it.getKey()).findFirst();
-                            if (e.isPresent()) {
-                                Event eventRes = e.get();
-                                eventRes.setViews(it.getValue());
-                                result.add(eventRes);
-                            }
-                        }
-                );
-        Map<Long, UserDto> users = userServiceClient.getAll(result.stream()
-                .map(Event::getInitiatorId)
-                .toList());
-
-        for (Event event : result) {
-            event.setInitiator(users.get(event.getInitiatorId()));
+    private List<Event> getTopEvents(Integer count) {
+        List<Event> eventTopList = eventRepository.findTop(count);
+        for (Event event : eventTopList) {
+            event.setConfirmedRequests(
+                    requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, event.getId()));
+            event.setLikes(eventRepository.countLikesByEventId(event.getId()));
+            double rate = analyzerClient.getInteractionsCount(List.of(event.getId()))
+                    .findFirst()
+                    .map(RecommendationsMessages.RecommendedEventProto::getScore)
+                    .orElse(0.0);
+            event.setRating(rate);
         }
-
-        return result.stream()
-                .map(eventMapper::eventToEventShortDto)
-                .toList();
+        return eventTopList;
     }
+
+
 
     @Override
     @Transactional(readOnly = true)
@@ -306,10 +244,18 @@ public class EventServiceImpl implements EventService {
 
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<EventShortDto> getTopViewEvent(Integer count) {
+        List<Event> eventTopList = getTopEvents(count);
+        return eventTopList.stream()
+                .map(eventMapper::eventToEventShortDto)
+                .toList();
+    }
 
     @Override
     @Transactional(readOnly = true)
-    public EventFullDto getById(EventGetByIdParams params, HitDto hitDto) {
+    public EventFullDto getById(EventGetByIdParams params) {
         Event receivedEvent;
         if (params.initiatorId() != null) {
             userServiceClient.checkExistence(params.initiatorId());
@@ -320,16 +266,8 @@ public class EventServiceImpl implements EventService {
         } else {
             receivedEvent = eventRepository.findById(params.eventId())
                     .orElseThrow(() -> new NotFoundException("Event with id " + params.eventId() + " not found"));
-            statClient.saveHit(hitDto);
 
-            List<HitStatDto> hitStatDtoList = statClient.getStats(
-                    "", "", List.of("/events/" + params.eventId()), true
-            );
-            Long view = 0L;
-            for (HitStatDto hitStatDto : hitStatDtoList) {
-                view += hitStatDto.getHits();
-            }
-            receivedEvent.setViews(view);
+
             receivedEvent.setConfirmedRequests(
                     requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, receivedEvent.getId()));
             receivedEvent.setLikes(eventRepository.countLikesByEventId(receivedEvent.getId()));
